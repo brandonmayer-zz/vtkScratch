@@ -81,8 +81,12 @@ vcl_ostream& operator<<(vcl_ostream& os, const vcl_vector<T>& v)
   return os;
 }
 
-void scatter_points(const vcl_vector<vgl_point_3d<float> >& points,
-                    vtkSmartPointer<vtkRenderer> renderer)
+template<class FieldType, template<typename> class PointType>
+void scatter_points(const vcl_vector<PointType<FieldType> >& points,
+                    vtkSmartPointer<vtkRenderer> renderer,
+                    const float r = 1.0,
+                    const float g = 1.0,
+                    const float b = 1.0)
 {
   vtkSmartPointer<vtkPoints> points_sptr =
     vtkSmartPointer<vtkPoints>::New();
@@ -92,7 +96,7 @@ void scatter_points(const vcl_vector<vgl_point_3d<float> >& points,
   
   points_sptr->SetDataTypeToFloat();
 
-  vcl_vector<vgl_point_3d<float> >::const_iterator
+  typename vcl_vector<PointType<FieldType> >::const_iterator
     vitr, vend = points.end();
   for(vitr = points.begin(); vitr != vend; ++vitr)
   {
@@ -125,6 +129,7 @@ void scatter_points(const vcl_vector<vgl_point_3d<float> >& points,
   vtkSmartPointer<vtkActor> actor =
     vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
+  actor->GetProperty()->SetColor(r,g,b);
 
   renderer->AddActor(actor);
 }
@@ -205,8 +210,40 @@ vcl_vector<PointType<FieldType> >
     return ret;
 }
 
+template<class FieldType, template<typename> class PointType>
+vcl_vector<PointType<FieldType> > projectedPoints(const vcl_vector<PointType<FieldType> >& pts, const vgl_homg_plane_3d<FieldType>& plane)
+{
+  vcl_vector<PointType<FieldType> > ret;
+  typename vcl_vector<PointType<FieldType> >::const_iterator
+    vitr, vend = pts.end();
+
+  vgl_vector_3d<double> normal = plane.normal();
+
+  const double D = d_signed(plane);
+  vcl_cout << "D = " << D << vcl_endl
+           <<"plane.d() = " << plane.d() << vcl_endl;
+  const double aCoeff = normal.x()*D;
+  const double bCoeff = normal.y()*D;
+  const double cCoeff = normal.z()*D;
+
+  for(vitr = pts.begin(); vitr != vend; ++vitr)
+    ret.push_back(PointType<FieldType>(vitr->x() - aCoeff, vitr->y() - bCoeff, vitr->z() - cCoeff));
+
+  return ret;
+}
+
 int main()
 {
+    //Create a renderer, render window and interactor
+  vtkSmartPointer<vtkRenderer> renderer =
+    vtkSmartPointer<vtkRenderer>::New();
+  vtkSmartPointer<vtkRenderWindow> renderWindow =
+    vtkSmartPointer<vtkRenderWindow>::New();
+  renderWindow->AddRenderer(renderer);
+  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+    vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  renderWindowInteractor->SetRenderWindow(renderWindow);
+  
   vgl_fit_plane_3d<float> plane_fitter;
 
   const unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -269,6 +306,11 @@ int main()
     planeFitter.add_point(pitr->x(), pitr->y(), pitr->z());
 
   planeFitter.fit(tol);
+
+  vcl_vector<vgl_homg_point_3d<float> > projPts =
+    projectedPoints(planeFitter.get_points(), planeFitter.get_plane());
+
+  scatter_points(projPts, renderer, 0, 1, 0);
   
   vgl_vector_3d<double> normal = planeFitter.get_plane().normal();
   vcl_cout << "plane = " << planeFitter.get_plane() << vcl_endl;
@@ -291,16 +333,6 @@ int main()
     vtkSmartPointer<vtkActor>::New();
   planeActor->SetMapper(planeMapper);
   
-  //Create a renderer, render window and interactor
-  vtkSmartPointer<vtkRenderer> renderer =
-    vtkSmartPointer<vtkRenderer>::New();
-  vtkSmartPointer<vtkRenderWindow> renderWindow =
-    vtkSmartPointer<vtkRenderWindow>::New();
-  renderWindow->AddRenderer(renderer);
-  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
-    vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  renderWindowInteractor->SetRenderWindow(renderWindow);
-
   scatter_points(pts,renderer);
 
   renderer->AddActor(cubeActor);
