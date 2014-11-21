@@ -12,6 +12,9 @@
 #include<vgl/algo/vgl_fit_plane_3d.h>
 
 #include"vtkActor.h"
+#include"vtkAxesActor.h"
+#include"vtkCellArray.h"
+#include"vtkGlyph3D.h"
 #include"vtkPlaneSource.h"
 #include"vtkPointData.h"
 #include"vtkPolyData.h"
@@ -25,6 +28,9 @@
 #include"vtkTransformPolyDataFilter.h"
 #include"vtkVersion.h"
 #include"vtkVertexGlyphFilter.h"
+#include"vtkOrientationMarkerWidget.h"
+#include"vtkSphereSource.h"
+#include"vtkDataSetMapper.h"
 
 #define tol 1e-3
 
@@ -37,8 +43,72 @@ double d_signed(const vgl_homg_plane_3d<T>& plane)
              plane.c()*plane.c());
 }
 
+template<class FieldType, template<typename> class PointType = vgl_homg_point_3d>
+void scatterPoints(const vcl_vector<PointType<FieldType> >& points,
+                    vtkSmartPointer<vtkRenderer> renderer,
+                    const float r = 1.0,
+                    const float g = 0.0,
+                    const float b = 0.0)
+{
+  vtkSmartPointer<vtkPoints> points_sptr =
+    vtkSmartPointer<vtkPoints>::New();
+
+  vtkSmartPointer<vtkCellArray> cellArray =
+    vtkSmartPointer<vtkCellArray>::New();
+  
+  points_sptr->SetDataTypeToFloat();
+
+  typename vcl_vector<PointType<FieldType> >::const_iterator
+    vitr, vend = points.end();
+  for(vitr = points.begin(); vitr != vend; ++vitr)
+  {
+    const vtkIdType pid =
+      points_sptr->InsertNextPoint(vitr->x(), vitr->y(), vitr->z());
+    cellArray->InsertNextCell(1);
+    cellArray->InsertCellPoint(pid);
+  }
+
+  vtkSmartPointer<vtkPolyData> polydata =
+    vtkSmartPointer<vtkPolyData>::New();
+
+  polydata->SetPoints(points_sptr);
+  polydata->SetVerts(cellArray);
+
+  vtkSmartPointer<vtkGlyph3D> glyph =
+    vtkSmartPointer<vtkGlyph3D>::New();
+
+  vtkSmartPointer<vtkSphereSource> sphere =
+    vtkSmartPointer<vtkSphereSource>::New();
+  sphere->SetRadius(0.05);
+  
+  glyph->SetInputData(polydata);
+  glyph->SetSourceConnection(sphere->GetOutputPort());
+  
+  vtkSmartPointer<vtkDataSetMapper> mapper=
+    vtkSmartPointer<vtkDataSetMapper>::New();
+
+  mapper->SetInputConnection(glyph->GetOutputPort());
+  vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+
+  actor->GetProperty()->SetColor(r,g,b);
+
+  renderer->AddActor(actor);
+}
+
 int main()
 {
+
+  //Create a renderer, render window and interactor
+  vtkSmartPointer<vtkRenderer> renderer =
+    vtkSmartPointer<vtkRenderer>::New();
+  vtkSmartPointer<vtkRenderWindow> renderWindow =
+    vtkSmartPointer<vtkRenderWindow>::New();
+  renderWindow->AddRenderer(renderer);
+  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+    vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  renderWindowInteractor->SetRenderWindow(renderWindow);
 
   const unsigned npts = 20;
   vgl_fit_plane_3d<float> plane_fit;
@@ -50,6 +120,8 @@ int main()
     plane_fit.add_point(dist(generator), dist(generator), 0);
 
   plane_fit.fit(tol);
+
+  scatterPoints(plane_fit.get_points(), renderer, 1, 0, 0);
 
   vgl_vector_3d<double> normal = plane_fit.get_plane().normal();
   vcl_cout << "normal = " << normal << vcl_endl;
@@ -73,6 +145,7 @@ int main()
   for(unsigned i = 0; i < npts; ++i)
     plane_fit.add_point(0, dist(generator), dist(generator));
 
+  scatterPoints(plane_fit.get_points(), renderer, 0, 1, 0);
   plane_fit.fit(tol);
   normal = plane_fit.get_plane().normal();
   vcl_cout << "normal = " << normal << vcl_endl;
@@ -94,6 +167,8 @@ int main()
   plane_fit.clear();
   for(unsigned i = 0; i < npts; ++i)
     plane_fit.add_point(dist(generator), dist(generator), 5);
+
+  scatterPoints(plane_fit.get_points(), renderer, 0, 0, 1);
 
   plane_fit.fit(tol);
   normal = plane_fit.get_plane().normal();
@@ -126,6 +201,7 @@ int main()
   for(unsigned i = 0; i < npts; ++i)
     plane_fit.add_point(dist(generator), dist(generator), -3);
 
+  scatterPoints(plane_fit.get_points(), renderer, 0.5, 0.5, 0);
   plane_fit.fit(tol);
   normal = plane_fit.get_plane().normal();
   vcl_cout << "normal = " << normal << vcl_endl;
@@ -148,17 +224,6 @@ int main()
     vtkSmartPointer<vtkActor>::New();
   actor4->SetMapper(mapper);
   actor4->GetProperty()->SetColor(.5,.5,0);
-  
-  
-  //Create a renderer, render window and interactor
-  vtkSmartPointer<vtkRenderer> renderer =
-    vtkSmartPointer<vtkRenderer>::New();
-  vtkSmartPointer<vtkRenderWindow> renderWindow =
-    vtkSmartPointer<vtkRenderWindow>::New();
-  renderWindow->AddRenderer(renderer);
-  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
-    vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  renderWindowInteractor->SetRenderWindow(renderWindow);
 
   renderer->AddActor(actor);
   renderer->AddActor(actor2);

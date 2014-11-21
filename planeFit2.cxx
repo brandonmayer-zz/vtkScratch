@@ -3,6 +3,7 @@
 #include<vcl_vector.h>
 #include<vcl_cstdlib.h>
 #include<vcl_cmath.h>
+#include<vcl_algorithm.h>
 #include<random>
 #include<chrono>
 
@@ -11,6 +12,7 @@
 #include<vgl/vgl_homg_point_3d.h>
 #include<vgl/vgl_homg_plane_3d.h>
 #include<vgl/algo/vgl_fit_plane_3d.h>
+#include<vgl/vgl_vector_3d.h>
 
 #include"vtkActor.h"
 #include"vtkAxesActor.h"
@@ -34,6 +36,7 @@
 #include"vtkVersion.h"
 #include"vtkVertexGlyphFilter.h"
 #include"vtkOrientationMarkerWidget.h"
+#include"vtkOutlineSource.h"
 
 #define tol 1e-3
 
@@ -126,10 +129,84 @@ void scatter_points(const vcl_vector<vgl_point_3d<float> >& points,
   renderer->AddActor(actor);
 }
 
+
+template<int D, class FieldType, template<typename> class PointType>
+struct pointCompLess
+{
+  bool operator()(const PointType<FieldType>& rhs, const PointType<FieldType>& lhs)
+  {
+    return rhs.x() < lhs.x();
+  }
+};
+
+template<class FieldType, template<typename> class PointType>
+struct pointCompLess<1, FieldType, PointType>
+{
+  bool operator()(const PointType<FieldType>& rhs, const PointType<FieldType>& lhs)
+  {
+    return rhs.y() < lhs.y();
+  }
+};
+
+template<class FieldType, template<typename> class PointType>
+struct pointCompLess<2, FieldType, PointType>
+{
+  bool operator()(const PointType<FieldType>& rhs, const PointType<FieldType>& lhs)
+  {
+    return rhs.z() < lhs.z();
+  }
+};
+
+template<class FieldType, template<typename> class PointType>
+vcl_ostream& operator<<(vcl_ostream& os, const vcl_vector<PointType<FieldType> >& v)
+{
+  typename vcl_vector<PointType<FieldType> >::const_iterator
+    vitr = v.begin(), vend = v.end();
+  for(;vitr != vend; ++vitr)
+    os << *vitr << "\n";
+
+  return os;
+}
+
+template<class FieldType, template<typename> class PointType>
+vcl_vector<PointType<FieldType> >
+  getCorners(const vcl_vector<PointType<FieldType> >& points)
+{
+    pointCompLess<0, FieldType, PointType> CompLessX;
+    pointCompLess<1, FieldType, PointType> CompLessY;
+    pointCompLess<2, FieldType, PointType> CompLessZ;
+ 
+    vcl_vector<PointType<FieldType> > ret;
+    
+    
+    ret.push_back(
+      *vcl_max_element(points.begin(), points.end(),
+                       pointCompLess<0,FieldType,PointType>()));
+    
+    ret.push_back(
+      *vcl_max_element(points.begin(), points.end(),
+                       pointCompLess<1,FieldType,PointType>()));
+    
+    ret.push_back(
+      *vcl_max_element(points.begin(), points.end(),
+                       pointCompLess<2,FieldType,PointType>()));
+
+    ret.push_back(
+      *vcl_min_element(points.begin(), points.end(),
+                       pointCompLess<0, FieldType, PointType>()));
+    
+    ret.push_back(
+      *vcl_min_element(points.begin(), points.end(),
+                       pointCompLess<1, FieldType, PointType>()));
+    ret.push_back(
+      *vcl_min_element(points.begin(), points.end(),
+                       pointCompLess<2, FieldType, PointType>()));
+
+    return ret;
+}
+
 int main()
 {
-#if 1
-  const unsigned npts = 20;
   vgl_fit_plane_3d<float> plane_fitter;
 
   const unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -159,15 +236,12 @@ int main()
       vcl_cout << pts[i] << vcl_endl;
     }
   vcl_cout << "npoints = " << pts.size() << vcl_endl;
-  
-#else
-  vcl_vector<vgl_point_3d<float> > pts;
-  for(unsigned i = 0; i < 5; ++i)
-    for(unsigned j = 0; j < 5; ++j)
-      for(unsigned k = 0; k < 5; ++k)
-        pts.push_back(vgl_point_3d<float>(i,j,k));
-#endif
 
+  vcl_vector<vgl_point_3d<float> > corners =
+    getCorners<float, vgl_point_3d>(pts);
+
+  vcl_cout << "corners = " << corners << vcl_endl;
+  
   //bounding box
   vtkSmartPointer<vtkCubeSource> cubeSource =
     vtkSmartPointer<vtkCubeSource>::New();
@@ -177,7 +251,6 @@ int main()
                         
 
   vcl_cout << "bbox = " << bbox << vcl_endl;
-
 
   vtkSmartPointer<vtkPolyDataMapper> cubeMapper =
     vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -189,9 +262,35 @@ int main()
   cubeActor->GetProperty()->SetRepresentationToWireframe();
 
 
+  vgl_fit_plane_3d<float> planeFitter;
+  vcl_vector<vgl_point_3d<float> >::const_iterator
+    pitr, pend = pts.end();
+  for(pitr = pts.begin(); pitr != pend; ++pitr)
+    planeFitter.add_point(pitr->x(), pitr->y(), pitr->z());
+
+  planeFitter.fit(tol);
   
+  vgl_vector_3d<double> normal = planeFitter.get_plane().normal();
+  vcl_cout << "plane = " << planeFitter.get_plane() << vcl_endl;
+  vcl_cout << "normal = " << normal << vcl_endl;
   
-  //random plane one
+  vtkSmartPointer<vtkPlaneSource> planeSource =
+    vtkSmartPointer<vtkPlaneSource>::New();
+
+  planeSource->SetNormal(normal.x(), normal.y(), normal.z());
+  // planeSource->SetOrigin(bbox.centroid_x(), bbox.centroid_y(), bbox.centroid_z());
+  planeSource->SetPoint1(bbox.min_x(), bbox.min_y(), bbox.min_z());
+  planeSource->SetPoint2(bbox.max_x(), bbox.max_y(), bbox.max_z());
+  
+    
+  vtkSmartPointer<vtkPolyDataMapper> planeMapper=
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  planeMapper->SetInputConnection(planeSource->GetOutputPort());
+
+  vtkSmartPointer<vtkActor> planeActor =
+    vtkSmartPointer<vtkActor>::New();
+  planeActor->SetMapper(planeMapper);
+  
   //Create a renderer, render window and interactor
   vtkSmartPointer<vtkRenderer> renderer =
     vtkSmartPointer<vtkRenderer>::New();
@@ -205,6 +304,7 @@ int main()
   scatter_points(pts,renderer);
 
   renderer->AddActor(cubeActor);
+  renderer->AddActor(planeActor);
 
   vtkSmartPointer<vtkAxesActor> axes = 
     vtkSmartPointer<vtkAxesActor>::New();
@@ -218,7 +318,6 @@ int main()
   widget->SetEnabled( 1 );
   widget->InteractiveOn();
   
-
   // Render and interact
   renderWindow->Render();
   renderWindowInteractor->Start();
