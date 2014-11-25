@@ -90,7 +90,7 @@ void getCorners(const vcl_vector<PointType<FieldType> >& projPts,
                 FieldType& ymin, FieldType& ymax,
                 FieldType& zmin, FieldType& zmax);
 
-void drawPlane(const vcl_vector<vgl_homg_point_3d<float>& v,
+void drawPlane(const vcl_vector<vgl_homg_point_3d<float> >& v,
                const vgl_homg_plane_3d<float>& p);
 
 
@@ -170,19 +170,45 @@ void getCorners(const vcl_vector<PointType<FieldType> >& projPts,
 }
 
 void drawPlane(const vcl_vector<vgl_homg_point_3d<float> >& v,
-               const vgl_fig_plane<float>& p)
+               const vgl_homg_plane_3d<float>& p)
 {
   
   float cx, cy, cz;
-  vgl_norm_trans_3d<float>::center_of_mass(v, cx, cy, cz);
-  vnl_vector<double>
+  for(typename vcl_vector<vgl_homg_point_3d<float> >::const_iterator
+        vitr = v.begin(); vitr != v.end(); ++vitr)
+  {
+    cx += vitr->x();
+    cy += vitr->y();
+    cz += vitr->z();
+  }
+  cx/=v.size();
+  cy/=v.size();
+  cz/=v.size();
+
+  vcl_cout << "c = " << cx << " " << cy << " " << cz << vcl_endl;
+
+  float xmin, xmax, ymin, ymax, zmin, zmax;
+  getCorners(v, xmin, xmax, ymin, ymax, zmin, zmax);
+
+  vcl_cout << xmin << " " << xmax << " "
+           << ymin << " " << ymax << " "
+           << zmin << " " << zmax << vcl_endl;
+  
   vtkSmartPointer<vtkPlaneSource> planeSource =
     vtkSmartPointer<vtkPlaneSource>::New();
 
+
+  vgl_vector_3d<double> normal = p.normal();
+  planeSource->SetOrigin(0,0,0);
+  planeSource->SetPoint1(xmin,ymin,0);
+  planeSource->SetPoint2(xmax,ymax,0);
+  // planeSource->SetXResolution(10);
+  // planeSource->SetYResolution(340);
   planeSource->SetCenter(cx,cy,cz);
-  
-  // planeSource->SetPoint2(xmin, ymin, zmin);
-  // planeSource->SetPoint1(xmax, ymax, zmax);
+  // planeSource->SetNormal(0,0,1);
+  planeSource->SetNormal(normal.x_, normal.y_, normal.z_);
+
+
 
   vtkSmartPointer<vtkPolyDataMapper> mapper =
     vtkSmartPointer<vtkPolyDataMapper>::New();
