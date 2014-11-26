@@ -214,11 +214,10 @@ samplePlanarPoints(const float a = 1,
   std::normal_distribution<FieldType> xynoise(0,xystd), znoise(0,zstd);
   for(typename vcl_vector<PointType<FieldType> >::iterator
         vitr = ret.begin(); vitr != ret.end(); ++vitr)
-  {
     vitr->set(cx+xynoise(generator),
               cy+xynoise(generator),
               (-d - vitr->x()*a - vitr->y()*b)/c + znoise(generator));
-  }
+
 
   return ret;
 }

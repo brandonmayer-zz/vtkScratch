@@ -20,7 +20,10 @@ int main()
 
   float cm[3];
   center_of_mass(pts,cm);
-  vcl_cout << "cm: " << cm << vcl_endl;
+  vcl_cout << "cm: "
+           << cm[0] << " "
+           << cm[1] << " "
+           << cm[2] << vcl_endl;
   
   vcl_cout << scatterMatrix << vcl_endl;
 
@@ -57,9 +60,9 @@ int main()
   vcl_cout << "planeNormal: " << planeNormal << vcl_endl;
   
   double startPoint[3];
-  startPoint[0] = centerOfMass[0];
-  startPoint[1] = centerOfMass[1];
-  startPoint[2] = centerOfMass[2];
+  startPoint[0] = cm[0];
+  startPoint[1] = cm[1];
+  startPoint[2] = cm[2];
 
   double endPoint[3];
   multiply(planeNormal, 2, endPoint);
@@ -73,7 +76,7 @@ int main()
   {
     vcl_vector<vgl_homg_point_3d<float> > centerOfMassPt;
     centerOfMassPt.push_back(
-      vgl_homg_point_3d<float>(centerOfMass[0], centerOfMass[1], centerOfMass[2]));
+      vgl_homg_point_3d<float>(cm[0], cm[1], cm[2]));
     scatterPoints(centerOfMassPt,0,0.5,0.5);
   }
   drawAxes();
