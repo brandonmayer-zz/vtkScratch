@@ -291,7 +291,10 @@ void drawAxes(const double cylinderRadius=0.05,
 // including vtkMath gave my compiler a hard time, so I re-wrote basic
 // functions like cross, add, subtract etc.
 void drawArrow(const double begin[3],
-               const double end[3])
+               const double end[3],
+               const double r = 0.45,
+               const double g = 0.45,
+               const double b = 0.45)
 {
 
   vtkSmartPointer<vtkArrowSource> arrowSource =
@@ -351,6 +354,7 @@ void drawArrow(const double begin[3],
   actor->SetUserMatrix(transform->GetMatrix());
 
   actor->SetMapper(mapper);
+  actor->GetProperty()->SetColor(r,g,b);
 
   renderer->AddActor(actor);
 }
