@@ -104,33 +104,8 @@ int main()
     add(startPoint, endPoints[idx], endPoints[idx]);
     drawArrow(startPoint, endPoints[idx], colors[idx][0], colors[idx][1], colors[idx][2]);
     // drawArrow(startPoint, endPoints[idx]);
-    vcl_cout << "endPoints[" << idx << "] = " << endPoints[idx] << vcl_endl;
-      
+    vcl_cout << "endPoints[" << idx << "] = " << endPoints[idx] << vcl_endl;      
   }
-
-#if 0
-  {
-    double e2[3];
-    for(unsigned i = 0; i < 3; ++i)
-      e2[i] = eigenvectors(i,2);
-
-    const double l2 = l2norm(e2);
-    
-    for(unsigned i = 0; i < 3; ++i)
-      e2[i] /= l2;
-
-
-    multiply(e2, 2, e2);
-    add(startPoint, e2, e2);
-
-    vcl_cout << "e2: " << e2 << vcl_endl;
-
-    drawArrow(startPoint, e2, 1, 0.5, 0.4);
-    
-  }
-#endif
-
-
   
   drawAxes();
   vtkBoilerPlate();

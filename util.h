@@ -274,6 +274,40 @@ void scatterPoints(const vcl_vector<PointType<FieldType> >& points,
   renderer->AddActor(actor);
 }
 
+void drawPlane(const double origin[3],
+               const double normal[3],
+               const double ax1[3],
+               const double ax2[3],
+               const double color[3])
+{
+  vtkSmartPointer<vtkPlaneSource> planeSource =
+    vtkSmartPointer<vtkPlaneSource>::New();
+
+  planeSource->SetOrigin(0, 0, 0);
+  planeSource->SetPoint1(ax1[0], ax1[1], ax1[2]);
+  planeSource->SetPoint2(ax2[0], ax2[1], ax2[2]);
+  planeSource->SetCenter(origin[0], origin[1], origin[2]);
+  planeSource->SetNormal(normal[0], normal[1], normal[2]);
+
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInputConnection(planeSource->GetOutputPort());
+
+  vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+
+  renderer->AddActor(actor);
+}
+
+void drawPlane(const double origin[3],
+               const double normal[3],
+               const double ax1[3],
+               const double ax2[3])
+{
+  double color[3] = {1.0,0.0,0.0};
+  drawPlane(origin, normal, ax1, ax2, color);
+}
+
 void drawAxes(const double cylinderRadius=0.05,
               const double totalLength=5.0)
 {
