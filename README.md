@@ -1,4 +1,5 @@
 vtkScratch
 ==========
-THIS IS NOT THE CODE REPOSITORY YOU ARE LOOKING FOR :)
-This is a scratch pad for vtk based visualizations with non-public dependencies...
+
+Experiments fitting planes via homogenous scatter matrix SVD and
+visualization using VXL and VTK.
