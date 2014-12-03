@@ -97,7 +97,7 @@ inline void multiply(const double v[3], const double s, double out[3])
 
 template<class FieldType, template<typename> class PointType>
 void center_of_mass(const vcl_vector<PointType<FieldType> >& pts,
-                    FieldType out[3])
+                    double out[3])
 {
   for(typename vcl_vector<PointType<FieldType> >::const_iterator
         vitr = pts.begin(); vitr != pts.end(); ++vitr)
@@ -203,21 +203,39 @@ samplePlanarPoints(const float a = 1,
                    const float b = 1,
                    const float c = 1,
                    const float d = 2,
-                   const float cx = 0,
-                   const float cy = 0,
+                   const float xmin = -5,
+                   const float xmax = 5,
+                   const float ymin = -3,
+                   const float ymax = 3,
+                   const float cx = 3,
+                   const float cy = 3,
+                   const unsigned nx = 10,
+                   const unsigned ny = 10,
                    const float zstd = 1.0,
-                   const float xystd = 1.0,
-                   const unsigned npts=50)
-{
-  vcl_vector<PointType<FieldType> > ret(npts);
-  
-  std::normal_distribution<FieldType> xynoise(0,xystd), znoise(0,zstd);
-  for(typename vcl_vector<PointType<FieldType> >::iterator
-        vitr = ret.begin(); vitr != ret.end(); ++vitr)
-    vitr->set(cx+xynoise(generator),
-              cy+xynoise(generator),
-              (-d - vitr->x()*a - vitr->y()*b)/c + znoise(generator));
+                   const float xystd = 1.0)
 
+{
+  std::normal_distribution<FieldType> xynoise(0,xystd), znoise(0,zstd);
+  
+  const unsigned npts = nx * ny;
+  vcl_vector<PointType<FieldType> > ret(npts);
+  const float xdelta = (xmax - xmin)/nx;
+  const float ydelta = (ymax - ymin)/ny;
+
+  typename vcl_vector<PointType<FieldType> >::iterator
+    vitr = ret.begin();
+  
+  for(float i = 0; i < nx; ++i)
+  {
+    const float x = xmin + i * xdelta + cx;
+    for(float j = 0; j < ny; ++j, ++vitr)
+    {
+      const float y = ymin + j * ydelta + cy;
+      const float z = (-d - a*x - b*y)/c;
+      vitr->set(x + xynoise(generator),y + xynoise(generator),z + znoise(generator));
+
+    }
+  }
 
   return ret;
 }
@@ -280,13 +298,22 @@ void drawPlane(const double origin[3],
                const double ax2[3],
                const double color[3])
 {
+
+#if 1
+  vcl_cout << "drawPlane::origin = " << origin << vcl_endl
+           << "drawPlane::normal = " << normal << vcl_endl
+           << "drawPlane::ax1 = " << ax1 << vcl_endl
+           << "drawPlane::ax2 = " << ax2 << vcl_endl
+           << "drawPlane::color = " << color << vcl_endl;
+#endif
+  
   vtkSmartPointer<vtkPlaneSource> planeSource =
     vtkSmartPointer<vtkPlaneSource>::New();
 
   planeSource->SetOrigin(0, 0, 0);
   planeSource->SetPoint1(ax1[0], ax1[1], ax1[2]);
   planeSource->SetPoint2(ax2[0], ax2[1], ax2[2]);
-  planeSource->SetCenter(origin[0], origin[1], origin[2]);
+  planeSource->SetCenter(origin[0], origin[1], origin[2]); 
   planeSource->SetNormal(normal[0], normal[1], normal[2]);
 
   vtkSmartPointer<vtkPolyDataMapper> mapper =
@@ -304,7 +331,8 @@ void drawPlane(const double origin[3],
                const double ax1[3],
                const double ax2[3])
 {
-  double color[3] = {1.0,0.0,0.0};
+  const double color[3] = {1.0,0.0,0.0};
+
   drawPlane(origin, normal, ax1, ax2, color);
 }
 
@@ -370,14 +398,6 @@ void drawArrow(const double begin[3],
   transform->Concatenate(matrix);
   transform->Scale(length,length,length);
 
-#if 0
-  // Transform the polydata
-  vtkSmartPointer<vtkTransformPolyDataFilter> transformPD = 
-    vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-  transformPD->SetTransform(transform);
-  transformPD->SetInputConnection(arrowSource->GetOutputPort());
-#endif
- 
   //Create a mapper and actor for the arrow
   vtkSmartPointer<vtkPolyDataMapper> mapper =
     vtkSmartPointer<vtkPolyDataMapper>::New();
