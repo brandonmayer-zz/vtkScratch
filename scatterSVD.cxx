@@ -1,5 +1,7 @@
 //this is /vtkScratch/scatterSVD.cxx
+
 #include"util.h"
+
 int main()
 {
   const float a=1,b=1,c=-1,d=2;
@@ -30,6 +32,7 @@ int main()
   vnl_svd<float> svd(scatterMatrix);
 
   const vnl_matrix<float>& V = svd.V();
+  const vnl_diag_matrix<float>& W = svd.W();
   
   vcl_cout << "svd: " << vcl_endl
            << svd << vcl_endl;
@@ -93,11 +96,24 @@ int main()
 #endif
 
 
-  double ax1[3];
-  double ax2[3];
-  subtract(endPoints[0], cm, ax1);
-  subtract(endPoints[1], cm, ax2);
+  double planePrincipal1[3];
+  double planePrincipal2[3];
+  double planePoint1[3];
+  double planePoint1[3];
   
+  for(unsigned i = 0; i < 3; ++i)
+  {
+    planePrincipal1[i] = eigenvectors[i][1]*W[1];
+    planePrincipal2[i] = eigenvectors[i][2]*W[2];
+  }
+
+  add(planePrincipal1,cm,planePoint1);
+  add(planePrincipal2,cm,planePoint2);
+
+  vcl_cout << "planePrincipal1: " << planePrincipal1 << vcl_endl;
+  vcl_cout << "planePrincipal2: " << planePrincipal2 << vcl_endl;
+  vcl_cout << "planePoint1: " << planePoint1 << vcl_endl;
+  vcl_cout << "planePoint2: " << 
   // drawPlane(cm, planeNormal, ax1, ax2);
 
   drawAxes();

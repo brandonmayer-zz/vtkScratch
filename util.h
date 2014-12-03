@@ -20,6 +20,7 @@
 #include<vgl/algo/vgl_fit_plane_3d.h>
 
 #include<vnl/algo/vnl_svd.h>
+#include<vnl/vnl_diag_matrix.h>
 #include<vnl/vnl_matrix.h>
 #include<vnl/vnl_vector.h>
 #include<vnl/vnl_vector_fixed.h>
