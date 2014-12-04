@@ -99,7 +99,7 @@ int main()
   double planePrincipal1[3];
   double planePrincipal2[3];
   double planePoint1[3];
-  double planePoint1[3];
+  double planePoint2[3];
   
   for(unsigned i = 0; i < 3; ++i)
   {
@@ -113,7 +113,7 @@ int main()
   vcl_cout << "planePrincipal1: " << planePrincipal1 << vcl_endl;
   vcl_cout << "planePrincipal2: " << planePrincipal2 << vcl_endl;
   vcl_cout << "planePoint1: " << planePoint1 << vcl_endl;
-  vcl_cout << "planePoint2: " << 
+  vcl_cout << "planePoint2: " << planePoint2 << vcl_endl;
   // drawPlane(cm, planeNormal, ax1, ax2);
 
   drawAxes();
