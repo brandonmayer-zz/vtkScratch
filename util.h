@@ -51,6 +51,7 @@
 #include"vtkVersion.h"
 #include"vtkVertexGlyphFilter.h"
 #include"vtkMatrix4x4.h"
+#include"vtkConvexHull2D.h"
 
 const unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 std::default_random_engine generator(seed);
@@ -83,6 +84,12 @@ inline void add(const double a[3], const double b[3], double out[3])
     out[i] = a[i] + b[i];
 }
 
+template<typename FieldType>
+double dot(const FieldType u[3], const FieldType v[3])
+{
+  return u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
+}
+
 inline void cross(const double x[3], const double y[3], double out[3])
 {
   out[0] = x[1] * y[2] - x[2] * y[1];
@@ -112,6 +119,22 @@ void center_of_mass(const vcl_vector<PointType<FieldType> >& pts,
   out[1] /= pts.size();
   out[2] /= pts.size();
 }
+
+// //based on vgl_plane_3d::plane_coord_vectors
+// template<class FieldType>
+// void plane_coord_vectors(const FieldType planeCoeffs[4],
+//                          const FieldType u[3],
+//                          const FieldType v[3])
+// {
+//   FieldType yaxis[3] = {0,1,0};
+//   FieldType normal[3] = {planeCoeffs[0], planeCoeffs[1], planeCoeffs[2]};
+
+//   FieldType dp = (FieldType)1 - vcl_abs(dot(normal,yaxis));
+//   if(dp > 0.1)
+//   {
+//     // u = cross(
+//   }
+// }
 
 vcl_ostream& operator<<(vcl_ostream& os, const double v[3])
 {

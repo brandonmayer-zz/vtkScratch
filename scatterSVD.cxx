@@ -96,6 +96,22 @@ int main()
 #endif
 
 
+
+
+
+  vtkSmartPointer<vtkPoints> vtkPts =
+    vtkSmartPointer<vtkPoints>::New();
+
+  for(vcl_vector<vgl_homg_point_3d<float>::const_iterator
+        vitr = pts.begin(); vitr != pts.end(); ++vitr)
+    vtkPts->InsertNextPoint(vitr->x(), vitr->y(), vitr->z());
+
+  vtkSmartPoiner<vtkPoints> convexHullPts =
+    vtkSmartPointer<vtkPoints>::New();
+
+  vtkConvexHull2D::CalculateConvexHull(vtkPts, convexHullPts, 3.0);
+
+#if 0
   double planePrincipal1[3];
   double planePrincipal2[3];
   double planePoint1[3];
@@ -106,16 +122,36 @@ int main()
     planePrincipal1[i] = eigenvectors[i][1]*W[1];
     planePrincipal2[i] = eigenvectors[i][2]*W[2];
   }
-
-  add(planePrincipal1,cm,planePoint1);
-  add(planePrincipal2,cm,planePoint2);
+  // add(planePrincipal1,cm,planePoint1);
+  // add(planePrincipal2,cm,planePoint2);
 
   vcl_cout << "planePrincipal1: " << planePrincipal1 << vcl_endl;
   vcl_cout << "planePrincipal2: " << planePrincipal2 << vcl_endl;
   vcl_cout << "planePoint1: " << planePoint1 << vcl_endl;
   vcl_cout << "planePoint2: " << planePoint2 << vcl_endl;
-  // drawPlane(cm, planeNormal, ax1, ax2);
+  // drawPlane(cm, planeNormal, planePoint1, planePoint2);
 
+  vtkSmartPointer<vtkPlaneSource> planeSource =
+    vtkSmartPointer<vtkPlaneSource>::New();
+
+  planeSource->SetOrigin(0,0,0);
+  planeSource->SetPoint1(planePoint1);
+  planeSource->SetPoint2(planePoint2);
+  planeSource->SetCenter(cm);
+  planeSource->SetNormal(planeNormal);
+
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInputConnection(planeSource->GetOutputPort());
+    
+  vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+
+  actor->SetMapper(mapper);
+    
+  renderer->AddActor(actor);
+#endif
+  
   drawAxes();
   vtkBoilerPlate();
   
