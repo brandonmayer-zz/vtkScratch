@@ -1,3 +1,12 @@
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <b.mayer1@gmail.com> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.   Brandon A. Mayer
+ * ----------------------------------------------------------------------------
+ */
+
 //this is /vtkScratch/scatterSVD.cxx
 
 #include"util.h"
@@ -94,22 +103,7 @@ int main()
   for(unsigned i = 0; i < 3; ++i)
     drawArrow(startPoint, endPoints[i], colors[i][0], colors[i][1], colors[i][2]);
 #endif
-
-
-
-
-
-  vtkSmartPointer<vtkPoints> vtkPts =
-    vtkSmartPointer<vtkPoints>::New();
-
-  for(vcl_vector<vgl_homg_point_3d<float>::const_iterator
-        vitr = pts.begin(); vitr != pts.end(); ++vitr)
-    vtkPts->InsertNextPoint(vitr->x(), vitr->y(), vitr->z());
-
-  vtkSmartPoiner<vtkPoints> convexHullPts =
-    vtkSmartPointer<vtkPoints>::New();
-
-  vtkConvexHull2D::CalculateConvexHull(vtkPts, convexHullPts, 3.0);
+  
 
 #if 0
   double planePrincipal1[3];

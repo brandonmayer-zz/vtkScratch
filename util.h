@@ -1,3 +1,12 @@
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <b.mayer1@gmail.com> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.   Brandon A. Mayer
+ * ----------------------------------------------------------------------------
+ */
+
 //this is /vtkScratch/util.h
 #ifndef UTIL_H_
 #define UTIL_H_
@@ -51,7 +60,6 @@
 #include"vtkVersion.h"
 #include"vtkVertexGlyphFilter.h"
 #include"vtkMatrix4x4.h"
-#include"vtkConvexHull2D.h"
 
 const unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 std::default_random_engine generator(seed);
@@ -120,21 +128,28 @@ void center_of_mass(const vcl_vector<PointType<FieldType> >& pts,
   out[2] /= pts.size();
 }
 
-// //based on vgl_plane_3d::plane_coord_vectors
-// template<class FieldType>
-// void plane_coord_vectors(const FieldType planeCoeffs[4],
-//                          const FieldType u[3],
-//                          const FieldType v[3])
-// {
-//   FieldType yaxis[3] = {0,1,0};
-//   FieldType normal[3] = {planeCoeffs[0], planeCoeffs[1], planeCoeffs[2]};
+//based on vgl_plane_3d::plane_coord_vectors
+template<class FieldType>
+void plane_coord_vectors(const FieldType planeCoeffs[4],
+                         const FieldType u[3],
+                         const FieldType v[3])
+{
+  FieldType yaxis[3] = {0,1,0};
+  FieldType normal[3] = {planeCoeffs[0], planeCoeffs[1], planeCoeffs[2]};
 
-//   FieldType dp = (FieldType)1 - vcl_abs(dot(normal,yaxis));
-//   if(dp > 0.1)
-//   {
-//     // u = cross(
-//   }
-// }
+  FieldType dp = (FieldType)1 - vcl_abs(dot(normal,yaxis));
+  if(dp > 0.1)
+  {
+    cross(yaxis,normal,u);
+    cross(normal,u,v);   
+  }
+  else
+  {
+    const FieldType z[3] = {0,0,1};
+    cross(normal, z, u);
+    cross(u, normal, v);
+  }
+}
 
 vcl_ostream& operator<<(vcl_ostream& os, const double v[3])
 {
@@ -204,6 +219,37 @@ void getScatterMatrix(const vcl_vector<vgl_homg_point_3d<FieldType> >& pts,
   coeff_matrix(3, 1) = B;
   coeff_matrix(3, 2) = C;
   coeff_matrix(3, 3) = (FieldType)(pts.size());
+}
+
+
+//return four extreme corners: anti-clockwise,
+//e.g. top right, lower right, lower left, top left
+template<class FieldType, template<typename> class PointType>
+vcl_vector<PointType<FieldType> >
+corners2D(const vcl_vector<PointType<FieldType> > pts)
+{
+  vcl_vector<PointType<FieldType> > ret(4);
+
+  for(unsigned i = 0; i < 4; ++i)
+    ret[i] = *(pts.begin());
+
+  for(typename vcl_vector<PointType<FieldType> >::const_iterator
+        vitr = pts.begin(); vitr != pts.end(); ++vitr)
+  {
+    if(ret[0]->x() < vitr->x() && ret[0]->y() < vitr->y())
+      ret[0] = *vitr;
+    
+    if(ret[1]->x() < vitr->x() && ret[1]->y() > vitr->y())
+      ret[1] = *vitr;
+    
+    if(ret[2]->x() > vitr->x() && ret[2]->y() > vitr->y())
+      ret[2] = *vitr;
+    
+    if(ret[3]->x() > vitr->x() && ret[3]->y() < vitr->y())
+      ret[3] = *vitr;
+  }
+  
+  return ret;
 }
 
 template<class FieldType, template<typename> class PointType>
