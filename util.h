@@ -20,19 +20,21 @@
 #include<random>
 #include<chrono>
 
-#include<vgl/vgl_box_3d.h>
-#include<vgl/vgl_point_3d.h>
-#include<vgl/vgl_homg_point_3d.h>
-#include<vgl/vgl_homg_plane_3d.h>
-#include<vgl/vgl_vector_3d.h>
-#include<vgl/algo/vgl_norm_trans_3d.h>
-#include<vgl/algo/vgl_fit_plane_3d.h>
+#include"vgl/algo/vgl_convex_hull_2d.h"
+#include"vgl/algo/vgl_fit_plane_3d.h"
+#include"vgl/algo/vgl_norm_trans_3d.h"
+#include"vgl/vgl_box_3d.h"
+#include"vgl/vgl_homg_plane_3d.h"
+#include"vgl/vgl_homg_point_3d.h"
+#include"vgl/vgl_point_3d.h"
+#include"vgl/vgl_polygon.h"
+#include"vgl/vgl_vector_3d.h"
 
-#include<vnl/algo/vnl_svd.h>
-#include<vnl/vnl_diag_matrix.h>
-#include<vnl/vnl_matrix.h>
-#include<vnl/vnl_vector.h>
-#include<vnl/vnl_vector_fixed.h>
+#include"vnl/algo/vnl_svd.h"
+#include"vnl/vnl_diag_matrix.h"
+#include"vnl/vnl_matrix.h"
+#include"vnl/vnl_vector.h"
+#include"vnl/vnl_vector_fixed.h"
 
 #include"vtkActor.h"
 #include"vtkAxesActor.h"
@@ -222,7 +224,7 @@ void getScatterMatrix(const vcl_vector<vgl_homg_point_3d<FieldType> >& pts,
 }
 
 template<class FieldType, template<typename> class PointType>
-void projectToZPlane(const vcl_vector<PointType<FieldType> > pts,
+void projectToZPlane(const vcl_vector<PointType<FieldType> >& pts,
                 vcl_vector<PointType<FieldType> >& out,
                 const FieldType zoff = (FieldType)0)
 {
@@ -233,16 +235,28 @@ void projectToZPlane(const vcl_vector<PointType<FieldType> > pts,
     oitr->set(pitr->x(), pitr->y(), zoff);
 }
 
+template<class FieldType, template<typename> class PointType>
+void projectToPlane(vcl_vector<PointType<FieldType> >& pts,
+                    const FieldType planeCoeffs[4])
+{
+  const FieldType a = planeCoeffs[0], b = planeCoeffs[1],
+    s = ((FieldType)1)/planeCoeffs[2], d = planeCoeffs[3];
+  
+  for(typename vcl_vector<PointType<FieldType> >::iterator
+        vitr = pts.begin(); vitr != pts.end(); ++vitr)
+    vitr->set(vitr->x(), vitr->y(), (-d - a*vitr->x() - b*vitr->y())*s, vitr->w());
+}
+
 //return four extreme corners: anti-clockwise,
 //e.g. top right, lower right, lower left, top left
 template<class FieldType, template<typename> class PointType>
 vcl_vector<PointType<FieldType> >
-corners2D(const vcl_vector<PointType<FieldType> > pts)
+corners2D(const vcl_vector<PointType<FieldType> >& pts)
 {
   vcl_vector<PointType<FieldType> > ret(4);
 
   for(unsigned i = 0; i < 4; ++i)
-    ret[i] = *(pts.begin());
+    ret[i] = pts[0];
 
   for(typename vcl_vector<PointType<FieldType> >::const_iterator
         vitr = pts.begin(); vitr != pts.end(); ++vitr)
@@ -264,9 +278,19 @@ corners2D(const vcl_vector<PointType<FieldType> > pts)
 }
 
 template<class FieldType, template<typename> class PointType>
-vcl_vector<PointType<FieldType> >
-void boundingQuad2D(const vcl_vector<PointType<FieldType> > pts)
+vgl_polygon<FieldType>
+convexHull2D(const vcl_vector<PointType<FieldType> >& pts)
 {
+  //good'nuff
+  vcl_vector<vgl_point_2d<FieldType> > euclideanPts2D(pts.size());
+  typename vcl_vector<vgl_point_2d<FieldType> >::iterator eitr = euclideanPts2D.begin();
+  for(typename vcl_vector<PointType<FieldType> >::const_iterator
+        vitr = pts.begin(); vitr != pts.end(); ++vitr, ++eitr)
+    eitr->set(vitr->x(), vitr->y());
+
+  vgl_convex_hull_2d<FieldType> convexHull(euclideanPts2D);
+
+  return convexHull.hull();
 }
                   
 
