@@ -20,6 +20,23 @@ int main()
 
   scatterPoints(pts);
 
+  vcl_vector<vgl_homg_point_3d<float> > corners =
+    corners2D(pts);
+
+  scatterPoints(corners,0,1,0);
+
+  vcl_cout << corners << vcl_endl;
+
+  vcl_vector<vgl_homg_point_3d<float> > projectedPts;
+  projectToZPlane(pts, projectedPts,(float)(-5.0));
+
+  scatterPoints(projectedPts, 0,0,1);
+
+  vcl_vector<vgl_homg_point_3d<float> > projectedCorners;
+  projectToZPlane(corners, projectedCorners, (float)(-5.0));
+
+  scatterPoints(projectedCorners, 0, 1, 0);
+
   vnl_matrix<float> scatterMatrix;
   vgl_norm_trans_3d<float> norm;
 
@@ -60,8 +77,6 @@ int main()
   vgl_fit_plane_3d<float> planeFitter(pts);
   planeFitter.fit(5);
   vcl_cout << "planeFitter: " << planeFitter.get_plane() << vcl_endl;
-
-  scatterPoints(pts);
 
   double planeNormal[3] = {eigenvectors(0,3), eigenvectors(1,3), eigenvectors(2,3)};
   {

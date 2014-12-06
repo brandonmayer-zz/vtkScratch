@@ -221,6 +221,17 @@ void getScatterMatrix(const vcl_vector<vgl_homg_point_3d<FieldType> >& pts,
   coeff_matrix(3, 3) = (FieldType)(pts.size());
 }
 
+template<class FieldType, template<typename> class PointType>
+void projectToZPlane(const vcl_vector<PointType<FieldType> > pts,
+                vcl_vector<PointType<FieldType> >& out,
+                const FieldType zoff = (FieldType)0)
+{
+  out.resize(pts.size());
+  typename vcl_vector<PointType<FieldType> >::iterator oitr=out.begin(); 
+  for(typename vcl_vector<PointType<FieldType> >::const_iterator
+        pitr = pts.begin(); pitr != pts.end(); ++pitr, ++oitr)
+    oitr->set(pitr->x(), pitr->y(), zoff);
+}
 
 //return four extreme corners: anti-clockwise,
 //e.g. top right, lower right, lower left, top left
@@ -236,21 +247,28 @@ corners2D(const vcl_vector<PointType<FieldType> > pts)
   for(typename vcl_vector<PointType<FieldType> >::const_iterator
         vitr = pts.begin(); vitr != pts.end(); ++vitr)
   {
-    if(ret[0]->x() < vitr->x() && ret[0]->y() < vitr->y())
+    if(ret[0].x() < vitr->x() && ret[0].y() < vitr->y())
       ret[0] = *vitr;
     
-    if(ret[1]->x() < vitr->x() && ret[1]->y() > vitr->y())
+    if(ret[1].x() < vitr->x() && ret[1].y() > vitr->y())
       ret[1] = *vitr;
     
-    if(ret[2]->x() > vitr->x() && ret[2]->y() > vitr->y())
+    if(ret[2].x() > vitr->x() && ret[2].y() > vitr->y())
       ret[2] = *vitr;
     
-    if(ret[3]->x() > vitr->x() && ret[3]->y() < vitr->y())
+    if(ret[3].x() > vitr->x() && ret[3].y() < vitr->y())
       ret[3] = *vitr;
   }
   
   return ret;
 }
+
+template<class FieldType, template<typename> class PointType>
+vcl_vector<PointType<FieldType> >
+void boundingQuad2D(const vcl_vector<PointType<FieldType> > pts)
+{
+}
+                  
 
 template<class FieldType, template<typename> class PointType>
 vcl_vector<PointType<FieldType> >
