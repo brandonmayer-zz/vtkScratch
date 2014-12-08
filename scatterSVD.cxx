@@ -20,23 +20,7 @@ int main()
 
   scatterPoints(pts);
 
-  // vcl_vector<vgl_homg_point_3d<float> > corners =
-  //   corners2D(pts);
-
-  // scatterPoints(corners,0,1,0);
-
-  // vcl_cout << corners << vcl_endl;
-
-  // vcl_vector<vgl_homg_point_3d<float> > projectedPts;
-  // projectToZPlane(pts, projectedPts,(float)(-5.0));
-
-  // scatterPoints(projectedPts, 0,0,1);
-
-  // vcl_vector<vgl_homg_point_3d<float> > projectedCorners;
-  // projectToZPlane(corners, projectedCorners, (float)(-5.0));
-
-  // scatterPoints(projectedCorners, 0, 1, 0);
-
+  //returns points in counter clockwise order
   vcl_vector<vgl_homg_point_3d<float> > convexHullPts;
   {
     vgl_polygon<float> convexHullPoly = convexHull2D(pts);
@@ -45,7 +29,10 @@ int main()
     vcl_vector<vgl_homg_point_3d<float> >::iterator citr = convexHullPts.begin();
     for(vgl_polygon<float>::sheet_t::const_iterator sitr = sheet.begin();
         sitr != sheet.end(); ++sitr, ++citr)
+    {
       citr->set(sitr->x(), sitr->y(), 0);
+      vcl_cout << sitr->x() << ", " << sitr->y() << vcl_endl;
+    }
   }
 
   scatterPoints(convexHullPts, 0.96, 0.72, 0.0);
@@ -54,6 +41,10 @@ int main()
     float norm[4] = {a,b,c,d};
     projectToPlane(convexHullPts, norm);
   }
+
+  scatterPoints(convexHullPts, 0.0, 0.5, 0.5);
+
+  drawPolygon(convexHullPts);
 
   vnl_matrix<float> scatterMatrix;
   vgl_norm_trans_3d<float> norm;

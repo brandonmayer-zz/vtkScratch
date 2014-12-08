@@ -37,12 +37,13 @@
 #include"vnl/vnl_vector_fixed.h"
 
 #include"vtkActor.h"
-#include"vtkAxesActor.h"
 #include"vtkArrowSource.h"
+#include"vtkAxesActor.h"
 #include"vtkCellArray.h"
 #include"vtkCubeSource.h"
 #include"vtkDataSetMapper.h"
 #include"vtkGlyph3D.h"
+#include"vtkMatrix4x4.h"
 #include"vtkOrientationMarkerWidget.h"
 #include"vtkOutlineSource.h"
 #include"vtkPlaneSource.h"
@@ -50,6 +51,7 @@
 #include"vtkPointData.h"
 #include"vtkPolyData.h"
 #include"vtkPolyDataMapper.h"
+#include"vtkPolygon.h"
 #include"vtkProperty.h"
 #include"vtkRenderWindow.h"
 #include"vtkRenderWindowInteractor.h"
@@ -61,7 +63,6 @@
 #include"vtkType.h"
 #include"vtkVersion.h"
 #include"vtkVertexGlyphFilter.h"
-#include"vtkMatrix4x4.h"
 
 const unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 std::default_random_engine generator(seed);
@@ -524,6 +525,54 @@ void drawArrow(const double begin[3],
 
   renderer->AddActor(actor);
 }
+
+//list of points must be in counter clockwise order and
+//not repeate the first point as the last point
+template<class FieldType, template<typename> class PointType>
+void drawPolygon(const vcl_vector<PointType<FieldType> >& p)
+{
+  
+  vtkSmartPointer<vtkPoints> points =
+    vtkSmartPointer<vtkPoints>::New();
+
+  for(typename vcl_vector<PointType<FieldType> >::const_iterator
+        pitr = p.begin(); pitr != p.end(); ++pitr)
+    points->InsertNextPoint(pitr->x(), pitr->y(), pitr->z());
+
+  //create polygon
+  vtkSmartPointer<vtkPolygon> polygon =
+    vtkSmartPointer<vtkPolygon>::New();
+  polygon->GetPointIds()->SetNumberOfIds(p.size());
+  for(unsigned i = 0; i < p.size(); ++i)
+    polygon->GetPointIds()->SetId(i,i);
+
+  // Add the polygon to a list of polygons
+  vtkSmartPointer<vtkCellArray> polygons =
+    vtkSmartPointer<vtkCellArray>::New();
+  polygons->InsertNextCell(polygon);
+
+  //create polydata
+  vtkSmartPointer<vtkPolyData> polygonPolyData =
+    vtkSmartPointer<vtkPolyData>::New();
+  polygonPolyData->SetPoints(points);
+  polygonPolyData->SetPolys(polygons);
+
+  // Create a mapper and actor
+  vtkSmartPointer<vtkPolyDataMapper> mapper =
+    vtkSmartPointer<vtkPolyDataMapper>::New();
+#if VTK_MAJOR_VERSION <= 5
+  mapper->SetInput(polygonPolyData);
+#else
+  mapper->SetInputData(polygonPolyData);
+#endif
+ 
+  vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+
+  renderer->AddActor(actor);
+}
+
 
 //should always be called last
 void vtkBoilerPlate()
