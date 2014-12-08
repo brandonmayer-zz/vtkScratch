@@ -13,3 +13,6 @@ visualization using VXL and VTK. There are no optimizations and no
 guarantees of correctness, this is just a little scratch pad for my
 personal use.
 
+Example output:
+![alt tag](https://github.com/brandonmayer/vtkScratch/blob/master/scatterSVD.png)
+
